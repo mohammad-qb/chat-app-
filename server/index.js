@@ -1,6 +1,7 @@
 const http = require("http");
 const express = require("express");
 const socketio = require("socket.io");
+const path = require("path");
 const cors = require("cors");
 
 const { addUser, removeUser, getUser, getUsersInRoom } = require("./users");
@@ -12,7 +13,14 @@ const server = http.createServer(app);
 const io = socketio(server);
 
 app.use(cors());
-app.use("/.netlify/functions/api", router);
+app.use(router);
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static("client/build"));
+
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
+  });
+}
 
 io.on("connect", (socket) => {
   socket.on("join", ({ name, room }, callback) => {
